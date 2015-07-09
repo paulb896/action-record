@@ -9,6 +9,7 @@ var actionRecord = actionRecord || {
     if (!actionRecord.record) {
       actionRecord.record = document.createElement('button');
       actionRecord.record.style.width = '100px';
+      actionRecord.record.style.height = '50px';
       actionRecord.record.style.color = '#decccc';
       actionRecord.record.innerHTML = '&#9679;';
       actionRecord.record.style.fontSize = '28px';
@@ -20,6 +21,7 @@ var actionRecord = actionRecord || {
     if (!actionRecord.stop) {
       actionRecord.stop = document.createElement('button');
       actionRecord.stop.style.width = '100px';
+      actionRecord.stop.style.height = '50px';
       actionRecord.stop.style.color = 'blue';
       actionRecord.stop.innerHTML = '&#9632;';
       actionRecord.stop.style.fontSize = '28px';
@@ -31,6 +33,7 @@ var actionRecord = actionRecord || {
     if (!actionRecord.play) {
       actionRecord.play = document.createElement('button');
       actionRecord.play.style.width = '100px';
+      actionRecord.play.style.height = '50px';
       actionRecord.play.style.color = 'green';
       actionRecord.play.innerHTML = '&#9658;';
       actionRecord.play.style.fontSize = '28px';
@@ -42,7 +45,7 @@ var actionRecord = actionRecord || {
     if (!actionRecord.actionInfo) {
       actionRecord.actionInfo = document.createElement('select');
       actionRecord.actionInfo.style.width = '100%';
-      actionRecord.actionInfo.style.height = '165px';
+      actionRecord.actionInfo.style.height = '150px';
       actionRecord.actionInfo.style.fontSize = '15px';
       actionRecord.actionInfo.multiple = true;
     }
@@ -69,8 +72,8 @@ var actionRecord = actionRecord || {
     var actionInfoElement = document.createElement('option');
     actionInfoElement.actionEvent = event;
     actionInfoElement.selected = true;
-    actionInfoElement.innerHTML = event.type + 'ed ' + event.target.type;
     actionInfoElement.actionTime = (new Date()).getTime() - actionRecord.startDate.getTime();
+    actionInfoElement.innerHTML = event.type + 'ed ' + event.target.type + ' @ ' + actionInfoElement.actionTime + 'ms';
     actionInfoElement.actionInfoElement = actionInfoElement;
     actionRecord.actionInfo.appendChild(actionInfoElement);
   },
