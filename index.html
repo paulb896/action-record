@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-CA" ng-app="exampleApp">
+<head>
+  <meta charset="utf-8" />
+  <title>Action Record</title>
+  <meta name="description" content="Action Record" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    input[type="checkbox"]{
+      width: 30px;
+      height: 30px;
+    }
+  </style>
+</head>
+<body style="padding-left:20px; padding-top:10px;">
+  <header style="margin-bottom:30px; margin-right:100px; ">
+    <h1 style="font-weight:100">Action Record</h1>
+    <a style="text-decoration:none" href="https://github.com/paulb896/action-record">Source on GitHub</a>
+  </header>
+  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
+  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
+  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
+  <pre style="margin:0"><code>
+&lt;script src="action-record.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  // Controls will be attached to given element
+  actionRecord.initialize(document);
+&lt;/script&gt;
+  </code></pre>
+  <script src="action-record.js"></script>
+  <script>
+    actionRecord.initialize(document);
+  </script>
+
+</body>
+</html>
