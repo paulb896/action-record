@@ -1,10 +1,48 @@
 
+var actionRecordUtils = actionRecordUtils || {
+  cssPath: function(el) {
+    if (!(el instanceof Element)) return;
+    var path = [];
+    while (el.nodeType === Node.ELEMENT_NODE) {
+        var selector = el.nodeName.toLowerCase();
+        if (el.id) {
+            selector += '#' + el.id;
+        } else {
+            var sib = el, nth = 1;
+            while (sib.nodeType === Node.ELEMENT_NODE && (sib = sib.previousSibling) && nth++);
+            selector += ":nth-child("+nth+")";
+        }
+        path.unshift(selector);
+        el = el.parentNode;
+    }
+    return path.join(" > ");
+  },
+  isBackspaceEvent: function(event) {
+    return (event.type == 'keydown' && (event.keyCode == 8));
+  },
+  removeUnselected: function(options) {
+    var selectedOptions = [];
+    for(var i in options) {
+      if (options[i].selected) {
+        selectedOptions.push(options[i]);
+      }
+    }
+    return selectedOptions;
+  }
+}
+
 var actionRecord = actionRecord || {
   actionList: [],
   record:null,
   play:null,
   actionInfo:null,
   startDate:null,
+  eventTypes: 'click keypress keydown',
+  inputListenerSelector: 'input',
+  playStartCallback: function() {},
+  playEndCallback: function() {},
+  recordStartCallback: function() {},
+  recordEndCallback: function() {},
   getRecordElement: function() {
     if (!actionRecord.record) {
       actionRecord.record = document.createElement('button');
@@ -34,8 +72,8 @@ var actionRecord = actionRecord || {
       actionRecord.play = document.createElement('button');
       actionRecord.play.style.width = '100px';
       actionRecord.play.style.height = '50px';
-      actionRecord.play.style.color = 'green';
-      actionRecord.play.innerHTML = '&#9658;';
+      actionRecord.play.style.color = '#b8dbb8';
+      actionRecord.play.innerHTML = '&#9654;';
       actionRecord.play.style.fontSize = '28px';
     }
 
@@ -72,45 +110,104 @@ var actionRecord = actionRecord || {
     var actionInfoElement = document.createElement('option');
     actionInfoElement.actionEvent = event;
     actionInfoElement.selected = true;
+    actionInfoElement.selector = actionRecordUtils.cssPath(event.target);
+    actionInfoElement.element = event.target;
     actionInfoElement.actionTime = (new Date()).getTime() - actionRecord.startDate.getTime();
-    actionInfoElement.innerHTML = event.type + 'ed ' + event.target.type + ' @ ' + actionInfoElement.actionTime + 'ms';
-    actionInfoElement.actionInfoElement = actionInfoElement;
+    actionInfoElement.innerHTML = event.type + 'ed ' + (event.keyCode ? String.fromCharCode(event.keyCode): '') + ' @ ' + actionInfoElement.actionTime + 'ms';
     actionRecord.actionInfo.appendChild(actionInfoElement);
   },
   stopListeners: function (event) {
-    var recordableElements = document.querySelectorAll('input');
+    var recordableElements = document.querySelectorAll(actionRecord.inputListenerSelector);
+    var eventTypes = actionRecord.eventTypes.split(' ');
     actionRecord.stop.style.color = 'blue';
     actionRecord.record.style.color = '#decccc';
     for(var i = 0; i < recordableElements.length; i++) {
-      recordableElements[i].removeEventListener('click', actionRecord.bindInputListener);
+      for(var j = 0; j < eventTypes.length; j++) {
+        recordableElements[i].removeEventListener(
+          eventTypes[j],
+          actionRecord.bindInputListener,
+          true,
+          true
+        );
+      }
     }
   },
+
   startListeners: function (event) {
-    var recordableElements = document.querySelectorAll('input');
+    var recordableElements = document.querySelectorAll(actionRecord.inputListenerSelector);
+    var eventTypes = actionRecord.eventTypes.split(' ');
+    actionRecord.startDate = new Date();
     actionRecord.stopListeners();
+
     actionRecord.stop.style.color = 'lightBlue';
     actionRecord.record.style.color = 'red';
-    actionRecord.startDate = new Date();
+
     for(var i = 0; i < recordableElements.length; i++) {
-      recordableElements[i].addEventListener('click', actionRecord.bindInputListener);
+      for(var j = 0; j < eventTypes.length; j++) {
+        recordableElements[i].recordEvent =
+          recordableElements[i].addEventListener(
+            eventTypes[j],
+            actionRecord.bindInputListener,
+            true,
+            true
+          );
+      }
     }
   },
-  callAction: function (element, time) {
+  callAction: function (element, event, time) {
     setTimeout(function() {
-      element.actionEvent.target.click();
+      if (actionRecordUtils.isBackspaceEvent(event)) {
+        element.value = element.value.substring(0, element.value.length - 1);
+      } else if (event.type == 'keypress') {
+        element.value += String.fromCharCode(event.keyCode);
+      } else {
+        element.click();
+      }
     }, time);
   },
   playActions: function (event) {
-    for(var i = 0; i < actionRecord.actionInfo.options.length; i++) {
-      var actionElement = actionRecord.actionInfo.options[i];
-      if (!actionElement.selected) {
-        continue;
-      }
-      actionRecord.callAction(actionElement, actionRecord.actionInfo.options[i].actionTime);
+    var actionOptionElement;
+    var longestActionTime = 0;
+    var selectedOptions = actionRecordUtils.removeUnselected(actionRecord.actionInfo.options);
+
+    // Remove timeout delay if only one action is selected
+    if (selectedOptions.length == 1) {
+      selectedOptions[0].actionTime = 0;
     }
+    actionRecord.playStartCallback();
+
+    actionRecord.play.style.color = 'green';
+    actionRecord.stop.style.color = 'lightBlue';
+
+    for(var i = 0; i < selectedOptions.length; i++) {
+      actionOptionElement = selectedOptions[i];
+      longestActionTime = actionRecord.actionInfo.options[i].actionTime || longestActionTime;
+      actionRecord.callAction(
+        actionOptionElement.actionEvent.target,
+        actionOptionElement.actionEvent,
+        actionOptionElement.actionTime
+      );
+    }
+
+    setTimeout(function() {
+      actionRecord.play.style.color = '#b8dbb8';
+      actionRecord.stop.style.color = 'blue';
+
+      actionRecord.playEndCallback();
+    }, longestActionTime);
   },
-  initialize: function(recordElementContainer) {
-    recordElementContainer.body.appendChild(actionRecord.getControlsElement());
+
+  /**
+   * Attach Controls to given container.
+   *
+   * @param  {object} controlsContainer Appends controls here.
+   */
+  attachControls: function(controlsContainer) {
+    if (!controlsContainer) {
+      controlsContainer = document.body;
+    };
+
+    controlsContainer.appendChild(actionRecord.getControlsElement());
     actionRecord.play.addEventListener('click', actionRecord.playActions);
     actionRecord.record.addEventListener('click', actionRecord.startListeners);
     actionRecord.stop.addEventListener('click', actionRecord.stopListeners);

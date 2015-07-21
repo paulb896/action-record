@@ -17,19 +17,21 @@
     <h1 style="font-weight:100">Action Record</h1>
     <a style="text-decoration:none" href="https://github.com/paulb896/action-record">Source on GitHub</a>
   </header>
-  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
-  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
-  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
+  <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
+  <br><br><input type="text"/><br><input type="text"/><br><input type="text"/>
   <pre style="margin:0"><code>
 &lt;script src="action-record.js"&gt;&lt;/script&gt;
 &lt;script&gt;
-  // Controls will be attached to given element
-  actionRecord.initialize(document);
+  // Controls will be attached to document
+  actionRecord.attachControls();
+
+  // Or attach to given element
+  actionRecord.attachControls(someElement);
 &lt;/script&gt;
   </code></pre>
   <script src="action-record.js"></script>
   <script>
-    actionRecord.initialize(document);
+    actionRecord.attachControls();
   </script>
 
 </body>
