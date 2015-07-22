@@ -20,6 +20,14 @@ var actionRecordUtils = actionRecordUtils || {
   isBackspaceEvent: function(event) {
     return (event.type == 'keydown' && (event.keyCode == 8));
   },
+
+  /**
+   * Return a list of all selected options.
+   *
+   * @param  {Object[]} options
+   *
+   * @return {object[]} Selected options;
+   */
   removeUnselected: function(options) {
     var selectedOptions = [];
     for(var i in options) {
@@ -28,6 +36,20 @@ var actionRecordUtils = actionRecordUtils || {
       }
     }
     return selectedOptions;
+  },
+
+  /**
+   * Subtracts the delay before the first action.
+   *
+   * @param  {[type]} options [description]
+   * @return {[type]}         [description]
+   */
+  subtractFirstActionDelay: function(options) {
+    var firstActionStartTime = options[0].actionTime;
+    for(var i in options) {
+      options[i].actionTime -= firstActionStartTime;
+    }
+    return options;
   }
 }
 
@@ -51,6 +73,7 @@ var actionRecord = actionRecord || {
       actionRecord.record.style.color = '#decccc';
       actionRecord.record.innerHTML = '&#9679;';
       actionRecord.record.style.fontSize = '28px';
+      actionRecord.record.title = 'record';
     }
 
     return actionRecord.record;
@@ -61,8 +84,9 @@ var actionRecord = actionRecord || {
       actionRecord.stop.style.width = '100px';
       actionRecord.stop.style.height = '50px';
       actionRecord.stop.style.color = 'blue';
-      actionRecord.stop.innerHTML = '&#9632;';
+      actionRecord.stop.innerHTML = '&#9642;';
       actionRecord.stop.style.fontSize = '28px';
+      actionRecord.stop.title = 'stop';
     }
 
     return actionRecord.stop;
@@ -73,8 +97,9 @@ var actionRecord = actionRecord || {
       actionRecord.play.style.width = '100px';
       actionRecord.play.style.height = '50px';
       actionRecord.play.style.color = '#b8dbb8';
-      actionRecord.play.innerHTML = '&#9654;';
+      actionRecord.play.innerHTML = '&#9656;';
       actionRecord.play.style.fontSize = '28px';
+      actionRecord.play.title = 'play';
     }
 
     return actionRecord.play;
@@ -106,16 +131,35 @@ var actionRecord = actionRecord || {
 
     return container;
   },
+
+  isInvalidEvent: function(event) {
+    if (event.type === 'keydown' && !actionRecordUtils.isBackspaceEvent(event)) {
+      return true;
+    }
+
+    return false;
+  },
+
+  /**
+   * Callback function for input event.
+   *
+   * @param  {object} event HTML input field event.
+   */
   bindInputListener: function (event) {
+    if (actionRecord.isInvalidEvent(event)) {
+      return;
+    }
+
     var actionInfoElement = document.createElement('option');
     actionInfoElement.actionEvent = event;
     actionInfoElement.selected = true;
     actionInfoElement.selector = actionRecordUtils.cssPath(event.target);
     actionInfoElement.element = event.target;
     actionInfoElement.actionTime = (new Date()).getTime() - actionRecord.startDate.getTime();
-    actionInfoElement.innerHTML = event.type + 'ed ' + (event.keyCode ? String.fromCharCode(event.keyCode): '') + ' @ ' + actionInfoElement.actionTime + 'ms';
+    actionInfoElement.innerHTML = event.type + ' ' + (event.keyCode ? String.fromCharCode(event.keyCode): '') + ' @ ' + actionInfoElement.actionTime + 'ms';
     actionRecord.actionInfo.appendChild(actionInfoElement);
   },
+
   stopListeners: function (event) {
     var recordableElements = document.querySelectorAll(actionRecord.inputListenerSelector);
     var eventTypes = actionRecord.eventTypes.split(' ');
@@ -154,6 +198,14 @@ var actionRecord = actionRecord || {
       }
     }
   },
+
+  /**
+   * Call a given event on a given element after a given timeout.
+   *
+   * @param  {Object} element
+   * @param  {Object} event
+   * @param  {int} time in ms until event is called.
+   */
   callAction: function (element, event, time) {
     setTimeout(function() {
       if (actionRecordUtils.isBackspaceEvent(event)) {
@@ -165,23 +217,26 @@ var actionRecord = actionRecord || {
       }
     }, time);
   },
+
+  /**
+   * [playActions description]
+   * @param  {[type]} event [description]
+   * @return {[type]}       [description]
+   */
   playActions: function (event) {
     var actionOptionElement;
     var longestActionTime = 0;
-    var selectedOptions = actionRecordUtils.removeUnselected(actionRecord.actionInfo.options);
+    var startingAction = 0;
+    var selectedOptions = (actionRecordUtils.removeUnselected(actionRecord.actionInfo.options));
+    selectedOptions = actionRecordUtils.subtractFirstActionDelay(selectedOptions);
 
-    // Remove timeout delay if only one action is selected
-    if (selectedOptions.length == 1) {
-      selectedOptions[0].actionTime = 0;
-    }
     actionRecord.playStartCallback();
-
     actionRecord.play.style.color = 'green';
     actionRecord.stop.style.color = 'lightBlue';
 
     for(var i = 0; i < selectedOptions.length; i++) {
       actionOptionElement = selectedOptions[i];
-      longestActionTime = actionRecord.actionInfo.options[i].actionTime || longestActionTime;
+      longestActionTime = selectedOptions[i].actionTime || longestActionTime;
       actionRecord.callAction(
         actionOptionElement.actionEvent.target,
         actionOptionElement.actionEvent,
@@ -190,10 +245,9 @@ var actionRecord = actionRecord || {
     }
 
     setTimeout(function() {
+      actionRecord.playEndCallback();
       actionRecord.play.style.color = '#b8dbb8';
       actionRecord.stop.style.color = 'blue';
-
-      actionRecord.playEndCallback();
     }, longestActionTime);
   },
 

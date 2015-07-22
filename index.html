@@ -6,19 +6,36 @@
   <meta name="description" content="Action Record" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
+    .clearAllButton{
+      padding:10px 15px 10px 15px;
+      font-weight: 600;
+      color: light-red;
+    }
+    .clearAllButton:hover{
+      color:red;
+    }
     input[type="checkbox"]{
       width: 30px;
       height: 30px;
     }
+    header{
+      margin-bottom:30px;
+      margin-right:100px;
+    }
+    body{
+      padding-left:20px;
+      padding-top:10px;
+    }
   </style>
 </head>
-<body style="padding-left:20px; padding-top:10px;">
-  <header style="margin-bottom:30px; margin-right:100px; ">
-    <h1 style="font-weight:100">Action Record</h1>
+<body>
+  <header>
+    <h1>Action Record</h1>
     <a style="text-decoration:none" href="https://github.com/paulb896/action-record">Source on GitHub</a>
   </header>
   <input type="checkbox"/><input type="checkbox"/><input type="checkbox"/><input type="checkbox"/>
-  <br><br><input type="text"/><br><input type="text"/><br><input type="text"/>
+  <br><br><input type="text"/><br><input type="text"/><br><input type="text"/><br>
+  <button class="clearAllButton" onclick="var inputFields = document.querySelectorAll('input'); for (var i = 0; i < inputFields.length; i++) {inputFields[i].value='';inputFields[i].checked=false;}">Clear All Inputs</button>
   <pre style="margin:0"><code>
 &lt;script src="action-record.js"&gt;&lt;/script&gt;
 &lt;script&gt;
